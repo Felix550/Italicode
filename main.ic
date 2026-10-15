@@ -1,0 +1,8 @@
+inizio
+	dichiara a: Vettore
+	assegna a = [10, 20, 30]
+	esegui a.Aggiungi(44)
+	scrivi "read: %d\n", a[1]
+	assegna a[1+1] = 99
+	scrivi "after: %s\n", a
+fine
