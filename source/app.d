@@ -1,3 +1,7 @@
+// italicode Copyright (C) 2026 Felice Di Lonardo
+// This program comes with ABSOLUTELY NO WARRANTY
+// This is free software, and you are welcome to redistribute it under certain conditions
+
 import std.stdio;
 import std.file;
 import lexer;
@@ -6,7 +10,6 @@ import semantic;
 import interpreter;
 import std.conv : text;
 import std.format;
-
 
 class ProgramError : Exception
 {
