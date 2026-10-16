@@ -3,14 +3,15 @@ module interpreter;
 import std.stdio;
 import std.format;
 import std.array : appender, join;
-import std.ascii : isDigit;
+import std.ascii : isDigit, isHexDigit, isASCII;
 import std.conv : to, ConvException;
 import std.string : strip;
 import std.algorithm.comparison : max, min;
 import std.algorithm.mutation : reverse;
 import std.algorithm.sorting : sort;
 import std.math : abs = fabs, ceil, cos, exp, floor, log, pow, round, sin, sqrt, tan;
-import std.uni : toLower;
+import std.random;
+import std.uni : isAlpha, isAlphaNum, isNumber, isWhite, isUpper, isLower, toUpper, toLower;
 import lexer;
 import parser;
 import expr;
@@ -237,6 +238,255 @@ private:
                 return true;
             default:
                 return false;
+        }
+    }
+
+    static bool isNumericString(string s)
+    {
+        string t = strip(s);
+        if (t.length == 0)
+            return false;
+
+        foreach (dchar ch; t)
+        {
+            if (!(ch == '+' || ch == '-' || ch == '.' || ch == 'e' || ch == 'E' || isDigit(ch)))
+                return false;
+        }
+
+        if (t == "+" || t == "-" || t == ".")
+            return false;
+
+        try
+        {
+            to!double(t);
+            return true;
+        }
+        catch (ConvException)
+        {
+            return false;
+        }
+    }
+
+    static bool isAlphaString(string s)
+    {
+        if (s.length == 0)
+            return false;
+        foreach (dchar ch; s)
+            if (!isAlpha(ch))
+                return false;
+        return true;
+    }
+
+    static bool isAlphaNumString(string s)
+    {
+        if (s.length == 0)
+            return false;
+        foreach (dchar ch; s)
+            if (!(isAlpha(ch) || isDigit(ch)))
+                return false;
+        return true;
+    }
+
+    static bool isDigitString(string s)
+    {
+        if (s.length == 0)
+            return false;
+        foreach (dchar ch; s)
+            if (!isDigit(ch))
+                return false;
+        return true;
+    }
+
+    static bool isWhiteString(string s)
+    {
+        if (s.length == 0)
+            return false;
+        foreach (dchar ch; s)
+            if (!isWhite(ch))
+                return false;
+        return true;
+    }
+
+    static bool isUpperString(string s)
+    {
+        bool seen = false;
+        foreach (dchar ch; s)
+        {
+            if (isAlpha(ch))
+            {
+                seen = true;
+                if (!isUpper(ch))
+                    return false;
+            }
+        }
+        return seen;
+    }
+
+    static bool isLowerString(string s)
+    {
+        bool seen = false;
+        foreach (dchar ch; s)
+        {
+            if (isAlpha(ch))
+            {
+                seen = true;
+                if (!isLower(ch))
+                    return false;
+            }
+        }
+        return seen;
+    }
+
+    static bool isHexDigitString(string s)
+    {
+        if (s.length == 0)
+            return false;
+        foreach (dchar ch; s)
+            if (!isHexDigit(ch))
+                return false;
+        return true;
+    }
+
+    static bool isAsciiString(string s)
+    {
+        foreach (dchar ch; s)
+            if (ch > 0x7F)
+                return false;
+        return true;
+    }
+
+    static string toUpperString(string s)
+    {
+        string outStr;
+        foreach (dchar ch; s)
+            outStr ~= toUpper(ch);
+        return outStr;
+    }
+
+    static string toLowerString(string s)
+    {
+        string outStr;
+        foreach (dchar ch; s)
+            outStr ~= toLower(ch);
+        return outStr;
+    }
+
+    Value callStringMethod(Value receiver, string method, Value[] args, size_t line, out Value updatedReceiver)
+    {
+        if (!receiver.isString)
+            throw new RuntimeError(format("il valore '%s' non è una stringa", receiver.toString()), line);
+
+        updatedReceiver = receiver;
+        switch (method)
+        {
+            case "isnumeric":
+            case "isNumeric":
+            case "numeric":
+            case "numerico":
+            case "ènumerico":
+            case "èNumerico":
+            case "ènumeric":
+                if (args.length != 0)
+                    throw new RuntimeError("IsNumeric/Numerico non richiede argomenti", line);
+                return Value.ofBoolean(isNumericString(receiver.str));
+
+            case "isalpha":
+            case "isAlpha":
+            case "alpha":
+            case "alfabetico":
+            case "èalfabetico":
+            case "èAlfabetico":
+                if (args.length != 0)
+                    throw new RuntimeError("IsAlpha/Alfabetico non richiede argomenti", line);
+                return Value.ofBoolean(isAlphaString(receiver.str));
+
+            case "isalphanum":
+            case "isAlphaNum":
+            case "alphanum":
+            case "alfanumerico":
+            case "èalfanumerico":
+            case "èAlfanumerico":
+                if (args.length != 0)
+                    throw new RuntimeError("IsAlphaNum/Alfanumerico non richiede argomenti", line);
+                return Value.ofBoolean(isAlphaNumString(receiver.str));
+
+            case "isdigit":
+            case "isDigit":
+            case "digit":
+            case "cifra":
+            case "ècifra":
+            case "èCifra":
+                if (args.length != 0)
+                    throw new RuntimeError("IsDigit/Cifra non richiede argomenti", line);
+                return Value.ofBoolean(isDigitString(receiver.str));
+
+            case "iswhite":
+            case "isWhite":
+            case "isspace":
+            case "isSpace":
+            case "space":
+            case "spazio":
+            case "èspazio":
+            case "èSpazio":
+                if (args.length != 0)
+                    throw new RuntimeError("IsWhite/Spazio non richiede argomenti", line);
+                return Value.ofBoolean(isWhiteString(receiver.str));
+
+            case "isupper":
+            case "isUpper":
+            case "upper":
+            case "èmaiuscolo":
+            case "èMaiuscolo":
+                if (args.length != 0)
+                    throw new RuntimeError("IsUpper/Maiuscolo non richiede argomenti", line);
+                return Value.ofBoolean(isUpperString(receiver.str));
+
+            case "islower":
+            case "isLower":
+            case "lower":
+            case "èminuscolo":
+            case "èMinuscolo":
+                if (args.length != 0)
+                    throw new RuntimeError("IsLower/Minuscolo non richiede argomenti", line);
+                return Value.ofBoolean(isLowerString(receiver.str));
+
+            case "ishexdigit":
+            case "isHexDigit":
+            case "hexdigit":
+            case "esadecimale":
+            case "èesadecimale":
+            case "èEsadecimale":
+                if (args.length != 0)
+                    throw new RuntimeError("IsHexDigit/Esadecimale non richiede argomenti", line);
+                return Value.ofBoolean(isHexDigitString(receiver.str));
+
+            case "isascii":
+            case "isASCII":
+            case "ascii":
+            case "èascii":
+            case "èASCII":
+                if (args.length != 0)
+                    throw new RuntimeError("IsASCII/ASCII non richiede argomenti", line);
+                return Value.ofBoolean(isAsciiString(receiver.str));
+
+            case "toupper":
+            case "toUpper":
+            case "maiuscolo":
+            case "maiuscola":
+                if (args.length != 0)
+                    throw new RuntimeError("ToUpper/Maiuscolo non richiede argomenti", line);
+                return Value.ofString(toUpperString(receiver.str));
+
+            case "tolower":
+            case "toLower":
+            case "minuscolo":
+            case "minuscola":
+                if (args.length != 0)
+                    throw new RuntimeError("ToLower/Minuscolo non richiede argomenti", line);
+                return Value.ofString(toLowerString(receiver.str));
+
+            default:
+                throw new RuntimeError(format("metodo '%s' non supportato per stringhe", method), line);
         }
     }
 
@@ -732,6 +982,66 @@ private:
 
     // ---------- espressioni ----------
 
+    Value evalCast(CastExpr c)
+    {
+        Value v = eval(c.value);
+        switch (normalizeTypeName(c.targetType))
+        {
+            case "intero":
+                if (v.isList)
+                    throw new RuntimeError("non è possibile convertire un vettore in intero", c.line);
+                if (v.isBool)
+                    return Value.ofNumber(v.boolValue ? 1 : 0);
+                if (v.isString)
+                {
+                    string s = strip(v.str);
+                    if (s.length == 0)
+                        throw new RuntimeError("impossibile convertire una stringa vuota in intero", c.line);
+                    try return Value.ofNumber(to!long(s));
+                    catch (ConvException)
+                    {
+                        throw new RuntimeError(format("impossibile convertire '%s' in intero", v.str), c.line);
+                    }
+                }
+                return Value.ofNumber(cast(long) v.num);
+
+            case "reale":
+                if (v.isList)
+                    throw new RuntimeError("non è possibile convertire un vettore in reale", c.line);
+                if (v.isBool)
+                    return Value.ofNumber(v.boolValue ? 1.0 : 0.0);
+                if (v.isString)
+                {
+                    string s = strip(v.str);
+                    if (s.length == 0)
+                        throw new RuntimeError("impossibile convertire una stringa vuota in reale", c.line);
+                    try return Value.ofNumber(to!double(s));
+                    catch (ConvException)
+                    {
+                        throw new RuntimeError(format("impossibile convertire '%s' in reale", v.str), c.line);
+                    }
+                }
+                return Value.ofNumber(v.num);
+
+            case "stringa":
+                return Value.ofString(v.toString());
+
+            case "booleano":
+                if (v.isBool) return v;
+                if (v.isString)
+                {
+                    string s = toLower(strip(v.str));
+                    return Value.ofBoolean(s.length > 0 && s != "0" && s != "false" && s != "falso");
+                }
+                if (v.isList)
+                    return Value.ofBoolean(v.list.length > 0);
+                return Value.ofBoolean(v.num != 0);
+
+            default:
+                throw new RuntimeError(format("tipo '%s' non supportato nel cast", c.targetType), c.line);
+        }
+    }
+
     Value eval(Expr e)
     {
         final switch (e.kind)
@@ -775,6 +1085,8 @@ private:
             }
             case ExprKind.Call:
                 return evalCall(cast(CallExpr) e);
+            case ExprKind.Cast:
+                return evalCast(cast(CastExpr) e);
             case ExprKind.BinOp:
                 return evalBinOp(cast(BinOpExpr) e);
         }
@@ -802,7 +1114,15 @@ private:
 
                 return result;
             }
-            throw new RuntimeError(format("il valore '%s' non supporta il metodo '%s'", receiver.toString(), c.name), c.line);
+
+            if (receiver.isString)
+            {
+                Value updatedReceiver;
+                Value result = callStringMethod(receiver, c.name, args, c.line, updatedReceiver);
+                return result;
+            }
+            throw new RuntimeError(format("il valore '%s' non supporta il metodo '%s'", 
+                                    receiver.toString(), c.name), c.line);
         }
 
         if (auto fn = c.name in functions)
@@ -816,9 +1136,11 @@ private:
 
             foreach (i, p; (*fn).params)
             {
-                if (i < (*fn).paramTypes.length && (*fn).paramTypes[i].length && !valueMatchesType(args[i], (*fn).paramTypes[i]))
+                if (i < (*fn).paramTypes.length && (*fn).paramTypes[i].length && 
+                    !valueMatchesType(args[i], (*fn).paramTypes[i]))
                     throw new RuntimeError(
-                        format("parametro '%s' di '%s' deve essere di tipo %s", p, c.name, (*fn).paramTypes[i]), c.line);
+                        format("parametro '%s' di '%s' deve essere di tipo %s", 
+                                p, c.name, (*fn).paramTypes[i]), c.line);
                 varStack[$ - 1][p] = args[i];
             }
 
@@ -843,15 +1165,15 @@ private:
             throw new RuntimeError(format("funzione '%s' non restituisce un valore", c.name), c.line);
         }
 
-        if (args.length == 0 && c.name == "random")
-            return Value.ofNumber(0.0);
-
         foreach (v; args)
             if (v.isString)
                 throw new RuntimeError(format("la funzione '%s' richiede numeri", c.name), c.line);
 
         switch (c.name)
         {
+            case "random":
+                if (args.length != 2) throw new RuntimeError("random richiede 2 argomenti", c.line);
+                return Value.ofNumber(uniform(args[0].num,args[1].num));
             case "abs":
                 if (args.length != 1) throw new RuntimeError("abs richiede 1 argomento", c.line);
                 return Value.ofNumber(abs(args[0].num));

@@ -893,6 +893,22 @@ private:
         return expr;
     }
 
+    CastExpr parseCastExpr(Token castTok)
+    {
+        expect(TokenType.LParen, "'('");
+
+        Token typeTok = peek();
+        if (typeTok.type != TokenType.Keyword && typeTok.type != TokenType.Identifier && typeTok.type != TokenType.String)
+            throw new ParseException(format("atteso un tipo per il cast, trovato %s", describe(typeTok)), typeTok);
+        advance();
+        string targetType = typeTok.type == TokenType.String ? normalizeTypeName(typeTok.text) : normalizeTypeName(typeTok.text);
+
+        expect(TokenType.Comma, "','");
+        Expr value = expression();
+        expect(TokenType.RParen, "')'");
+        return new CastExpr(targetType, value, castTok.line);
+    }
+
     /// primary = Number | String | Boolean | List | Identifier | "(" expr ")"
     Expr primary()
     {
@@ -915,6 +931,11 @@ private:
             {
                 advance();
                 return parsePostfix(new BooleanExpr(false, t.line));
+            }
+            if (t.text == "cast" || t.text == "converti")
+            {
+                Token castTok = advance();
+                return parsePostfix(parseCastExpr(castTok));
             }
             break;
         case TokenType.Identifier:

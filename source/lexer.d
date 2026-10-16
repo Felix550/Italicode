@@ -1,10 +1,11 @@
 module lexer;
 
-import std.ascii : isDigit, isAlpha, isAlphaNum, isHexDigit;
+import std.ascii : isDigit, isHexDigit;
 import std.array : appender;
 import std.file : readText;
 import std.format : format;
-import std.uni : toLower;
+import std.uni : isAlpha, isAlphaNum, toLower;
+import std.utf : decode, UTFException;
 
 /// Tipi di token riconosciuti dal lexer.
 enum TokenType
@@ -97,6 +98,7 @@ immutable string[] defaultKeywords = [
     "continua", "ferma", "per", "da", "passo",
     "funzione", "ritorna",
     "intero", "reale", "stringa", "booleano", "vettore", "lista",
+    "cast", "converti",
     "vero", "falso", "true", "false"
 ];
 
@@ -190,9 +192,47 @@ private:
 
     char peek() const { return atEnd ? '\0' : src[pos]; }
 
+    dchar peekDchar() const
+    {
+        if (atEnd) return '\0';
+        size_t i = pos;
+        try
+        {
+            dchar ch;
+            ch = decode(src, i);
+            return ch;
+        }
+        catch (UTFException)
+        {
+            return cast(dchar) src[pos];
+        }
+    }
+
     char peekAt(size_t offset) const
     {
         return (pos + offset < src.length) ? src[pos + offset] : '\0';
+    }
+
+    dchar advanceDchar()
+    {
+        if (atEnd) return '\0';
+
+        size_t i = pos;
+        dchar ch;
+        try
+        {
+            ch = decode(src, i);
+        }
+        catch (UTFException)
+        {
+            ch = cast(dchar) src[pos];
+            i = pos + 1;
+        }
+
+        pos = i;
+        if (ch == '\n') { line++; col = 1; }
+        else           { col++; }
+        return ch;
     }
 
     char advance()
@@ -332,18 +372,36 @@ private:
 
     // ---------- keyword / identificatori ----------
 
+    static bool isIdentifierPart(dchar ch)
+    {
+        if (ch == '_') return true;
+        if (ch >= '0' && ch <= '9') return true;
+        if (ch <= 0x7F)
+            return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z');
+        return isAlpha(ch) || isAlphaNum(ch);
+    }
+
     void lexWord()
     {
         immutable startPos = pos;
         immutable startLine = line;
         immutable startCol = col;
 
-        while (isAlphaNum(peek()) || peek() == '_')
-            advance();
+        while (true)
+        {
+            if (atEnd) break;
+            dchar ch = peekDchar();
+            if (isIdentifierPart(ch))
+            {
+                advanceDchar();
+                continue;
+            }
+            break;
+        }
 
         string word = src[startPos .. pos];
         string normalized;
-        foreach (ch; word)
+        foreach (dchar ch; word)
             normalized ~= toLower(ch);
 
         add((normalized in keywords) ? TokenType.Keyword : TokenType.Identifier,

@@ -12,7 +12,7 @@ string numberToString(double n)
     return to!string(n);
 }
 
-enum ExprKind { Number, String, Boolean, List, Variable, Index, Call, BinOp }
+enum ExprKind { Number, String, Boolean, List, Variable, Index, Call, Cast, BinOp }
 
 /// Operatori binari. Per aggiungerne uno: nuovo valore qui, opSymbol(),
 /// parser (tabella di precedenza) e evalBinOp() nell'interprete.
@@ -150,6 +150,24 @@ class CallExpr : Expr
         if (receiver)
             return format("%s.%s(%s)", receiver.toString(), name, parts.join(", "));
         return format("%s(%s)", name, parts.join(", ")); 
+    }
+}
+
+class CastExpr : Expr
+{
+    string targetType;
+    Expr value;
+
+    this(string targetType, Expr value, size_t line)
+    {
+        super(ExprKind.Cast, line);
+        this.targetType = targetType;
+        this.value = value;
+    }
+
+    override string toString()
+    {
+        return format("cast(%s, %s)", targetType, value.toString());
     }
 }
 

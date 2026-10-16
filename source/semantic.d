@@ -190,6 +190,12 @@ private:
                     requireExpr(a);
                 break;
             }
+            case ExprKind.Cast:
+            {
+                auto c = cast(CastExpr) e;
+                requireExpr(c.value);
+                break;
+            }
             case ExprKind.BinOp:
             {
                 auto b = cast(BinOpExpr) e;
