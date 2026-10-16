@@ -240,12 +240,13 @@ private:
         }
     }
 
-    Value callListMethod(Value receiver, string method, Value[] args, size_t line)
+    Value callListMethod(Value receiver, string method, Value[] args, size_t line, out Value updatedReceiver)
     {
         if (!receiver.isList)
             throw new RuntimeError(format("il valore '%s' non è un vettore", receiver.toString()), line);
 
         Value[] list = receiver.list.dup;
+        updatedReceiver = receiver;
         switch (method)
         {
             case "push":
@@ -266,7 +267,10 @@ private:
                     throw new RuntimeError("indice fuori range nel vettore", line);
                 Value result = list[index];
                 list = list[0 .. index] ~ list[index + 1 .. $];
-                return Value.ofList(list);
+                
+                updatedReceiver = Value.ofList(list);
+
+                return result;
 
             case "remove":
             case "rimuovi":
@@ -787,12 +791,15 @@ private:
             Value receiver = eval(c.receiver);
             if (receiver.isList)
             {
-                Value result = callListMethod(receiver, c.name, args, c.line);
+                Value updatedReceiver;
+                Value result = callListMethod(receiver, c.name, args, c.line, updatedReceiver);
+
                 if (isMutatingListMethod(c.name) && c.receiver.kind == ExprKind.Variable)
                 {
                     auto v = cast(VariableExpr) c.receiver;
-                    assignVar(v.name, result, c.line);
+                    assignVar(v.name, updatedReceiver, c.line);
                 }
+
                 return result;
             }
             throw new RuntimeError(format("il valore '%s' non supporta il metodo '%s'", receiver.toString(), c.name), c.line);
