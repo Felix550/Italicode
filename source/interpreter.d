@@ -380,97 +380,61 @@ private:
         switch (method)
         {
             case "isnumeric":
-            case "isNumeric":
-            case "numeric":
-            case "numerico":
             case "ènumerico":
-            case "èNumerico":
-            case "ènumeric":
                 if (args.length != 0)
                     throw new RuntimeError("IsNumeric/Numerico non richiede argomenti", line);
                 return Value.ofBoolean(isNumericString(receiver.str));
 
             case "isalpha":
-            case "isAlpha":
-            case "alpha":
-            case "alfabetico":
             case "èalfabetico":
-            case "èAlfabetico":
                 if (args.length != 0)
                     throw new RuntimeError("IsAlpha/Alfabetico non richiede argomenti", line);
                 return Value.ofBoolean(isAlphaString(receiver.str));
 
-            case "isalphanum":
-            case "isAlphaNum":
-            case "alphanum":
-            case "alfanumerico":
+            case "isalphaNum":
             case "èalfanumerico":
-            case "èAlfanumerico":
                 if (args.length != 0)
                     throw new RuntimeError("IsAlphaNum/Alfanumerico non richiede argomenti", line);
                 return Value.ofBoolean(isAlphaNumString(receiver.str));
 
             case "isdigit":
-            case "isDigit":
-            case "digit":
-            case "cifra":
             case "ècifra":
-            case "èCifra":
                 if (args.length != 0)
                     throw new RuntimeError("IsDigit/Cifra non richiede argomenti", line);
                 return Value.ofBoolean(isDigitString(receiver.str));
 
             case "iswhite":
-            case "isWhite":
             case "isspace":
-            case "isSpace":
-            case "space":
-            case "spazio":
             case "èspazio":
-            case "èSpazio":
                 if (args.length != 0)
                     throw new RuntimeError("IsWhite/Spazio non richiede argomenti", line);
                 return Value.ofBoolean(isWhiteString(receiver.str));
 
             case "isupper":
-            case "isUpper":
-            case "upper":
             case "èmaiuscolo":
-            case "èMaiuscolo":
                 if (args.length != 0)
                     throw new RuntimeError("IsUpper/Maiuscolo non richiede argomenti", line);
                 return Value.ofBoolean(isUpperString(receiver.str));
 
             case "islower":
-            case "isLower":
-            case "lower":
             case "èminuscolo":
-            case "èMinuscolo":
                 if (args.length != 0)
                     throw new RuntimeError("IsLower/Minuscolo non richiede argomenti", line);
                 return Value.ofBoolean(isLowerString(receiver.str));
 
             case "ishexdigit":
-            case "isHexDigit":
-            case "hexdigit":
-            case "esadecimale":
             case "èesadecimale":
-            case "èEsadecimale":
                 if (args.length != 0)
                     throw new RuntimeError("IsHexDigit/Esadecimale non richiede argomenti", line);
                 return Value.ofBoolean(isHexDigitString(receiver.str));
 
             case "isascii":
-            case "isASCII":
-            case "ascii":
             case "èascii":
-            case "èASCII":
                 if (args.length != 0)
                     throw new RuntimeError("IsASCII/ASCII non richiede argomenti", line);
                 return Value.ofBoolean(isAsciiString(receiver.str));
 
             case "toupper":
-            case "toUpper":
             case "maiuscolo":
             case "maiuscola":
                 if (args.length != 0)
@@ -478,7 +442,6 @@ private:
                 return Value.ofString(toUpperString(receiver.str));
 
             case "tolower":
-            case "toLower":
             case "minuscolo":
             case "minuscola":
                 if (args.length != 0)
